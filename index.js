@@ -1,0 +1,119 @@
+const express = require('express');
+const session = require('express-session');
+const cookieParser = require('cookie-parser');
+const bodyParser = require('body-parser');
+const helmet = require('helmet');
+const path = require('path');
+
+const passport = require('passport');
+const LocalStrategy = require('passport-local');
+
+
+
+// =============================================================================================================
+
+
+// Setting up mongoDB / mongoose
+const mongoose = require('mongoose');
+const MongoStore = require('connect-mongo');
+const dbURL = process.env.DB_URI || 'mongodb+srv://prashantkumar:Password024680@testcluster.8xzqf.mongodb.net/exampto?retryWrites=true&w=majority';
+
+
+// Connecting to mongoDB
+mongoose.connect(dbURL, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('MongoDB Connected'))
+  .catch(err => console.log(err));
+
+
+
+// =============================================================================================================
+
+
+// Setting up express
+const app = express();
+
+
+// Express middlewares
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(bodyParser.json());
+app.use(express.static(path.join( __dirname, '/public')));
+
+
+// Setting up session
+const secret = process.env.SECRET || 'g6Hf7JS83fGK89jS';
+const sessionConfig = {
+    name: 'app',
+    secret,
+    resave : false,
+    saveUninitialized : true,
+    cookie : {
+        httpOnly : true,
+        // secure : true, // For production phase, turn off in developing phase.
+        maxAge : 86400000 // One day in milliseconds
+    },
+    store : MongoStore.create({
+        mongoUrl : dbURL,
+        secret,
+        touchAfter : 86400 // One day in seconds
+    })
+}
+
+app.use(cookieParser());
+app.use(session(sessionConfig));
+
+
+// Setting up helmet
+app.use(helmet());
+
+
+
+// =============================================================================================================
+
+
+// Importing User model
+const Person = require('./models/person');
+
+
+// Setting up passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.use(new LocalStrategy(Person.authenticate()));
+passport.serializeUser(Person.serializeUser());
+passport.deserializeUser(Person.deserializeUser());
+
+
+
+// =============================================================================================================
+
+
+// Importing routes
+const userRoutes = require('./routes/userRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const coordinatorRoutes = require('./routes/coordinatorRoutes');
+const examRoutes = require('./routes/examRoutes');
+const editorRoutes = require('./routes/editorRoutes');
+
+
+// Setting up routes
+app.use('/user', userRoutes);
+app.use('/admin', adminRoutes);
+app.use('/coordinator', coordinatorRoutes);
+app.use('/exam', examRoutes);
+app.use('/editor', editorRoutes);
+
+
+app.get('/', (req, res) => {
+  res.send({message: 'Hello World!'});
+});
+
+
+
+// =============================================================================================================
+
+
+// Setting up server
+app.listen(8080, () => {
+  console.log('App started at port 8080');
+})
