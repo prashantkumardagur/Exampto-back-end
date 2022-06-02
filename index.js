@@ -128,6 +128,7 @@ app.use((err, req, res, next) => {
 
 
 // Setting up server
-app.listen(8080, () => {
+const port = process.env.PORT || 8080;
+app.listen(port, () => {
   console.log('App started at port 8080');
 })
