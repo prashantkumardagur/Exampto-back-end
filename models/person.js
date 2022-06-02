@@ -82,7 +82,10 @@ const personSchema = new Schema({
                 type : Date,
                 default : Date.now
             },
-            ip : String
+            ip : {
+                type : String,
+                default : '0.0.0.0'
+            }
         }
     }
 });

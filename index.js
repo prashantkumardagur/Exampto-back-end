@@ -1,7 +1,6 @@
 const express = require('express');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
-const bodyParser = require('body-parser');
 const helmet = require('helmet');
 const path = require('path');
 
@@ -34,10 +33,9 @@ const app = express();
 
 
 // Express middlewares
+app.use(express.static(path.join( __dirname, '/public')));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(bodyParser.json());
-app.use(express.static(path.join( __dirname, '/public')));
 
 
 // Setting up session
@@ -64,7 +62,7 @@ app.use(session(sessionConfig));
 
 
 // Setting up helmet
-app.use(helmet());
+// app.use(helmet());
 
 
 
@@ -87,8 +85,15 @@ passport.deserializeUser(Person.deserializeUser());
 
 // =============================================================================================================
 
+app.use('*', (req, res, next) => { 
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+})
 
 // Importing routes
+const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const coordinatorRoutes = require('./routes/coordinatorRoutes');
@@ -97,6 +102,7 @@ const editorRoutes = require('./routes/editorRoutes');
 
 
 // Setting up routes
+app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
 app.use('/admin', adminRoutes);
 app.use('/coordinator', coordinatorRoutes);
@@ -111,6 +117,14 @@ app.get('/', (req, res) => {
 
 
 // =============================================================================================================
+
+// Error handling
+app.use((err, req, res, next) => {
+  let { status = 500, msg = 'Something went wrong', message} = err;
+  res.status(status).send({msg , message, stack: err.stack});
+  next();
+})
+
 
 
 // Setting up server

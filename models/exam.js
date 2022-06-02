@@ -12,11 +12,11 @@ const examSchema = Schema({
         required : true,
         default: 'New Test Name'
     },
-    category : { 
+    category : [{ 
         type : String,
         enum : ['JEE', 'NEET', 'SSC'],
         required : true
-    },
+    }],
     marking : {
         positive : Number,
         negative : Number,
