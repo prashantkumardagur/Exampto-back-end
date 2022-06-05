@@ -1,11 +1,6 @@
 const express = require('express');
-const session = require('express-session');
-const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const path = require('path');
-
-const passport = require('passport');
-const LocalStrategy = require('passport-local');
 
 
 
@@ -14,7 +9,6 @@ const LocalStrategy = require('passport-local');
 
 // Setting up mongoDB / mongoose
 const mongoose = require('mongoose');
-const MongoStore = require('connect-mongo');
 const dbURL = process.env.DB_URI || 'mongodb+srv://prashantkumar:Password024680@testcluster.8xzqf.mongodb.net/exampto?retryWrites=true&w=majority';
 
 
@@ -38,29 +32,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 
-// Setting up session
-const secret = process.env.SECRET || 'g6Hf7JS83fGK89jS';
-const sessionConfig = {
-    name: 'app',
-    secret,
-    resave : false,
-    saveUninitialized : true,
-    cookie : {
-        httpOnly : true,
-        // secure : true, // For production phase, turn off in developing phase.
-        maxAge : 86400000 // One day in milliseconds
-    },
-    store : MongoStore.create({
-        mongoUrl : dbURL,
-        secret,
-        touchAfter : 86400 // One day in seconds
-    })
-}
-
-app.use(cookieParser());
-app.use(session(sessionConfig));
-
-
 // Setting up helmet
 // app.use(helmet());
 
@@ -69,26 +40,14 @@ app.use(session(sessionConfig));
 // =============================================================================================================
 
 
-// Importing User model
-const Person = require('./models/person');
 
+let allowedOrigin = process.env.ALLOWED_ORIGIN || 'http://localhost:3000';
 
-// Setting up passport
-app.use(passport.initialize());
-app.use(passport.session());
-
-passport.use(new LocalStrategy(Person.authenticate()));
-passport.serializeUser(Person.serializeUser());
-passport.deserializeUser(Person.deserializeUser());
-
-
-
-// =============================================================================================================
-
-app.use('*', (req, res, next) => { 
+app.use((req, res, next) => { 
   res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
   next();
 })
 
@@ -110,6 +69,7 @@ app.use('/exam', examRoutes);
 app.use('/editor', editorRoutes);
 
 
+// Default home route
 app.get('/', (req, res) => {
   res.send({message: 'Hello World!'});
 });
@@ -117,6 +77,7 @@ app.get('/', (req, res) => {
 
 
 // =============================================================================================================
+
 
 // Error handling
 app.use((err, req, res, next) => {

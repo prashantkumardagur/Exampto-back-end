@@ -6,7 +6,6 @@ module.exports.validateRegistrationData = async (req, res, next) => {
   const schema = joi.object({
       name: joi.string().min(3).max(32).required().regex(/^[a-zA-Z ]*$/),
       email: joi.string().min(3).max(64).required().email(),
-      username: joi.string().min(3).max(32).required().alphanum(),
       password: joi.string().min(6).max(32).required().regex(/^[^<>%$()]*$/),
   }).required();
 
@@ -17,7 +16,7 @@ module.exports.validateRegistrationData = async (req, res, next) => {
 
 module.exports.validateLoginData = async (req, res, next) => { 
     const schema = joi.object({
-        username: joi.string().min(3).max(32).required().alphanum(),
+        email: joi.string().min(3).max(64).required().email(),
         password: joi.string().min(6).max(32).required().regex(/^[^<>%$()]*$/),
     }).required();
 

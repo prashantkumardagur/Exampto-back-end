@@ -1,50 +1,64 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
 const Person = require('../models/person');
 const { respondSuccess, respondError } = require('./utils/responders');
 
 
-// Get current loggedin user
-module.exports.getUser = async (req, res) => {
-  if(req.user) respondSuccess(res, 'User found', req.user);
-  else respondError(res, 'No user logged in', 404);
+// ========================================================================================================
+
+const jwtSecret = process.env.JWT_SECRET || 'server_secret';
+
+// ========================================================================================================
+
+
+// Refresh token
+module.exports.refreshToken = async (req, res) => {
+  const { _id, role } = req.person;
+  const token = jwt.sign({ _id, role }, jwtSecret, { expiresIn: '12h' });
+  res.json({ token });
 }
+
 
 // User login
 module.exports.login = async (req, res) => {
-  let user = req.user;
-  user.salt = undefined;
-  user.hash = undefined;
-  respondSuccess(res, 'User logged in successfully', user);
+  const { email, password } = req.body;
+
+  const person = await Person.findOne({ email });
+  if(!person) return respondError(res, 'User not found', 404);
+
+  const passwordMatch = await bcrypt.compare(password, person.password);
+  if(!passwordMatch) return respondError(res, 'Invalid password', 400);
+
+  person.password = undefined;
+  const token = jwt.sign({ _id: person._id, role: person.role }, jwtSecret, { expiresIn: '12h' });
+  res.json({ token, person });
 }
+
 
 // User logout
 module.exports.logout = async (req, res) => {
-  req.logout((err) => {
-    if(err) return next(err);
-    respondSuccess(res, 'User logged out successfully');
-  });
+  res.json({logout: true});
 }
+
 
 // User registration
 module.exports.registerUser = async (req, res) => {
+  const { name, email, password } = req.body;
+
+  const existingUser = await Person.findOne({ email });
+  if(existingUser) return respondError(res, 'User already exists', 400);
+
+  const hashedPassword = await bcrypt.hash(password, 12);
+
+
+  const person = new Person({ name, email, password : hashedPassword, role: 'user' });
   try {
-      const {name, email, username, password} = req.body;
-      const user = new Person({
-          name,
-          email,
-          username,
-          role : 'user',
-          meta : { lastLogin : { ip : req.ip }}
-      });
-
-      const registeredUser = await Person.register(user, password);
-
-      req.login(registeredUser, (err) => {
-          if(err) return next(err);
-          respondSuccess(res, 'User registered successfully', registeredUser);
-      });
-
-  } catch(err) {
-      respondError(res, err.message, 400);
+    await person.save();
+    person.password = undefined;
+    respondSuccess(res, 'User registered', person);
+  } catch (err) {
+    respondError(res, 'Failed to register', 400);
   }
 }
 
