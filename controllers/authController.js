@@ -16,7 +16,7 @@ const jwtSecret = process.env.JWT_SECRET || 'server_secret';
 module.exports.refreshToken = async (req, res) => {
   const { _id, role } = req.person;
   const token = jwt.sign({ _id, role }, jwtSecret, { expiresIn: '12h' });
-  res.json({ token });
+  respondSuccess(res, 'Token refreshed', token);
 }
 
 
@@ -32,13 +32,13 @@ module.exports.login = async (req, res) => {
 
   person.password = undefined;
   const token = jwt.sign({ _id: person._id, role: person.role }, jwtSecret, { expiresIn: '12h' });
-  res.json({ token, person });
+  respondSuccess(res, 'User logged in', { token, person });
 }
 
 
 // User logout
 module.exports.logout = async (req, res) => {
-  res.json({logout: true});
+  respondSuccess(res, 'User logged out');
 }
 
 
@@ -56,7 +56,7 @@ module.exports.registerUser = async (req, res) => {
   try {
     await person.save();
     person.password = undefined;
-    respondSuccess(res, 'User registered', person);
+    respondSuccess(res, 'User registered', {registered: true});
   } catch (err) {
     respondError(res, 'Failed to register', 400);
   }
