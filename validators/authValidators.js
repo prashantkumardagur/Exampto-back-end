@@ -1,6 +1,9 @@
 const joi = require('joi');
 const { respondError } = require('../controllers/utils/responders');
 
+//=======================================================================================
+
+
 module.exports.validateRegistrationData = async (req, res, next) => {
 
   const schema = joi.object({
@@ -13,6 +16,8 @@ module.exports.validateRegistrationData = async (req, res, next) => {
   if(result.error) return respondError(res, result.error.details[0].message, 400);
   next();
 }
+
+
 
 module.exports.validateLoginData = async (req, res, next) => { 
     const schema = joi.object({

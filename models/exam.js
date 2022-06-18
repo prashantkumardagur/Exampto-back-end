@@ -22,8 +22,8 @@ const examSchema = Schema({
         negative : Number,
     },
     duration : Number,
-    startTime : Date,
-    lastStartTime : Date,
+    startTime : Number,
+    lastStartTime : Number,
     price : {
         type : Number,
         default : 0
@@ -51,8 +51,8 @@ const examSchema = Schema({
             type : Boolean,
             default : false
         },
-        createdOn : Date,
-        resultDeclaredOn : Date,
+        createdOn : Number,
+        resultDeclaredOn : Number,
         creater : {
             type : Schema.Types.ObjectId,
             ref : 'Person'

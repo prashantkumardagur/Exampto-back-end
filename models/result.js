@@ -30,9 +30,9 @@ const resultSchema = Schema({
             type : Boolean,
             default : false
         },
-        endedOn : Date,
+        endedOn : Number,
         startedOn : {
-            type : Date,
+            type : Number,
             default : Date.now
         },
         deviceDetails : {

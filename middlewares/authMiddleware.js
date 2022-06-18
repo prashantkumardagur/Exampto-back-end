@@ -8,7 +8,7 @@ const jwtSecret = process.env.JWT_SECRET || 'server_secret';
 // ========================================================================================================
 
 // Get current loggedin user
-const authCheck = async (req, res, next) => {
+module.exports.authCheck = async (req, res, next) => {
   try{
     const token = req.headers.authorization.split(' ')[1];
     if(!token) throw new Error('No token provided');
@@ -21,4 +21,14 @@ const authCheck = async (req, res, next) => {
   }
 }
 
-module.exports = authCheck;
+// Checks if person is coordinator
+module.exports.coordinatorCheck = async (req, res, next) => {
+  if(req.role !== 'coordinator') return respondError(res, 'Unauthorized access', 403);
+  next();
+}
+
+// Checks if person is user
+module.exports.userCheck = async (req, res, next) => {
+  if(req.role !== 'user') return respondError(res, 'Unauthorized access', 403);
+  next();
+}

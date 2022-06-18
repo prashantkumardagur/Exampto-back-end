@@ -1,5 +1,6 @@
 const express = require('express');
 const helmet = require('helmet');
+const cors = require('cors');
 const path = require('path');
 
 
@@ -26,30 +27,21 @@ mongoose.connect(dbURL, { useNewUrlParser: true, useUnifiedTopology: true })
 const app = express();
 
 
+// Setting up middlewares
+app.use(helmet());
+app.use(cors());
+
+
 // Express middlewares
 app.use(express.static(path.join( __dirname, '/public')));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 
-// Setting up helmet
-// app.use(helmet());
-
-
 
 // =============================================================================================================
 
 
-
-let allowedOrigin = process.env.ALLOWED_ORIGIN || 'http://localhost:3000';
-
-app.use((req, res, next) => { 
-  res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
-  res.setHeader('Access-Control-Allow-Headers', 'Origin, Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
-  next();
-})
 
 // Importing routes
 const authRoutes = require('./routes/authRoutes');
@@ -73,6 +65,13 @@ app.use('/editor', editorRoutes);
 app.get('/', (req, res) => {
   res.send({message: 'Hello World!'});
 });
+
+app.all('*', (req, res) => {
+  res.status(404).json({
+    status: 'failure',
+    message: 'Not Found'
+  });
+})
 
 
 
