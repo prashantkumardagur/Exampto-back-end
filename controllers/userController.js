@@ -31,6 +31,27 @@ module.exports.getExam = async (req, res) => {
 }
 
 
+// Get exam with all details for results page
+module.exports.getResult = async (req, res) => {
+  const id = req.body.id;
+  if(!id) return respondError(res, 'No exam id provided', 400);
+  try{
+    let exam = await Exam.findById(id);
+    if(!exam) return respondError(res, 'Exam not found', 404);
+
+    if(!exam.meta.resultDeclared) return respondError(res, 'Results not declared yet', 403);
+
+    let result = await Result.findOne({exam: id, user: req.person._id});
+    if(!result) return respondError(res, 'Results not found', 404);
+
+    respondSuccess(res, 'Results fetched', {exam, result});
+
+  } catch(err) {
+    respondError(res, 'Unable to fetch exam', 500);
+  }
+}
+
+
 // Gets all exams of a user
 module.exports.getExams = async (req, res) => {
   try{
@@ -86,3 +107,4 @@ module.exports.enroll = async (req, res) => {
     return respondError(res, 'Unable to enroll in exam', 500);
   }
 }
+
