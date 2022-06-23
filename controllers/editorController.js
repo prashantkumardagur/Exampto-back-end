@@ -1,5 +1,7 @@
 const Exam = require('../models/exam');
 
+const path = require('path');
+
 const { respondSuccess, respondError } = require('./utils/responders');
 
 //=======================================================================================
@@ -94,5 +96,18 @@ module.exports.deleteQuestion = async (req, res) => {
     respondSuccess(res, 'Question deleted', true);
   } catch(err) {
     respondError(res, 'Failed to delete question', 500);
+  }
+}
+
+// Solution upload
+module.exports.solutionUpload = async (req, res) => {
+  const id = req.body.examId;
+  if(!id) return respondError(res, 'Exam id not provided', 400);
+  try{
+    let exam = await Exam.findByIdAndUpdate(id, { solutions: req.file.size });
+    if(!exam) return respondError(res, 'Exam not found', 404);
+    respondSuccess(res, 'Solution uploaded', true);
+  } catch(err) {
+    respondError(res, 'Failed to upload solution', 500);
   }
 }

@@ -29,8 +29,8 @@ const examSchema = Schema({
         default : 0
     },
     solutions : {
-        type : String,
-        default : ''
+        type : Number,
+        default : 0
     },
     contents : [contentSchema],
     answers : [Number],

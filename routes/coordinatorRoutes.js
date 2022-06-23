@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const { authCheck, coordinatorCheck } = require('../middlewares/authMiddleware');
+const { fileUpload } = require('../middlewares/fileUpload');
 
 const coordinator = require('../controllers/coordinatorController');
 

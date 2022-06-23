@@ -2,6 +2,8 @@ const Exam = require('../models/exam');
 const Person = require('../models/person');
 const Result = require('../models/result');
 
+const path = require('path');
+
 const { respondSuccess, respondError } = require('./utils/responders');
 
 //=======================================================================================
@@ -51,33 +53,19 @@ module.exports.getResult = async (req, res) => {
   }
 }
 
-
-// Gets all exams of a user
-module.exports.getExams = async (req, res) => {
+// Get solution file of an exam
+module.exports.downloadSolution = async (req, res) => {
+  const id = req.body.examId;
+  if(!id) return respondError(res, 'No exam id provided', 400);
   try{
-    let myExam;
-    let person = await Person.findById(req.person._id, {examsEnrolled: 1}).populate('examsEnrolled', {contents: 0, solutions: 0});
-    let enrolledExams = [];
-    person.examsEnrolled.forEach(exam => {
-      myExam = exam.toObject();
-      myExam.totalQuestions = exam.answers.length;
-      myExam.answers = undefined;
-      enrolledExams.push(myExam);
-    });
+    let exam = await Exam.findById(id);
+    if(!exam) return respondError(res, 'Exam not found', 404);
+    if(!exam.meta.resultDeclared) return respondError(res, 'Results not declared yet', 403);
+    if(exam.solutions == 0) return respondError(res, 'No solution file available', 400);
 
-    let exams = await Exam.find({'meta.isPublished': true, 'meta.isPrivate': false, startTime: {$gt: Date.now()} }, {contents: 0, solutions: 0});
-    let availableExams = [];
-    exams.forEach(exam => {
-      myExam = exam.toObject();
-      myExam.totalQuestions = exam.answers.length;
-      myExam.answers = undefined;
-      availableExams.push(myExam);
-    });
-
-    respondSuccess(res, 'Exams fetched', {availableExams, enrolledExams});
-
-  } catch(err){
-    return respondError(res, 'Unable to fetch exams', 500);
+    res.sendFile(path.join(__dirname, `../uploads/solutions/${id}.pdf`));
+  } catch(err) {
+    respondError(res, err.message, 500);
   }
 }
 
@@ -108,3 +96,52 @@ module.exports.enroll = async (req, res) => {
   }
 }
 
+
+// =========================================================================================
+
+// Gets all exams of a user
+module.exports.getExams = async (req, res) => {
+  try{
+    let myExam;
+    let person = await Person.findById(req.person._id, {examsEnrolled: 1}).populate('examsEnrolled', {contents: 0, solutions: 0});
+    let enrolledExams = [];
+    person.examsEnrolled.forEach(exam => {
+      myExam = exam.toObject();
+      myExam.totalQuestions = exam.answers.length;
+      myExam.answers = undefined;
+      enrolledExams.push(myExam);
+    });
+
+    let exams = await Exam.find({'meta.isPublished': true, 'meta.isPrivate': false, startTime: {$gt: Date.now()} }, {contents: 0, solutions: 0});
+    let availableExams = [];
+    exams.forEach(exam => {
+      myExam = exam.toObject();
+      myExam.totalQuestions = exam.answers.length;
+      myExam.answers = undefined;
+      availableExams.push(myExam);
+    });
+
+    respondSuccess(res, 'Exams fetched', {availableExams, enrolledExams});
+
+  } catch(err){
+    return respondError(res, 'Unable to fetch exams', 500);
+  }
+}
+
+// =========================================================================================
+
+// Gets all declared results of a user
+module.exports.getResults = async (req, res) => {
+  try{
+    let results = await Result.find({user: req.person._id}).populate('exam', {meta: 1, name: 1});
+
+    let myResults = [];
+    results.forEach(result => {
+      if(result.exam.meta.resultDeclared) myResults.push(result.toObject());
+    });
+
+    respondSuccess(res, 'Results fetched', myResults);
+  } catch(err) {
+    return respondError(res, 'Unable to fetch results', 500);
+  }
+}

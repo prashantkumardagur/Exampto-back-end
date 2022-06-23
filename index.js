@@ -2,6 +2,7 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const path = require('path');
+const bodyParser = require('body-parser');
 
 
 
@@ -34,8 +35,8 @@ app.use(cors());
 
 // Express middlewares
 app.use(express.static(path.join( __dirname, '/public')));
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
 
 

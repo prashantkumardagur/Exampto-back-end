@@ -32,3 +32,9 @@ module.exports.userCheck = async (req, res, next) => {
   if(req.role !== 'user') return respondError(res, 'Unauthorized access', 403);
   next();
 }
+
+// Checks if person is admin
+module.exports.adminCheck = async (req, res, next) => {
+  if(req.role !== 'admin') return respondError(res, 'Unauthorized access', 403);
+  next();
+}

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const { authCheck, coordinatorCheck } = require('../middlewares/authMiddleware');
+const { fileUpload } = require('../middlewares/fileUpload');
 
 const editor = require('../controllers/editorController');
 
@@ -17,5 +18,9 @@ router.post('/update-exam-details', coordinatorCheck, validateUpdateExamData, ed
 router.post('/add-question', validateNewQuestionData, coordinatorCheck, editor.addQuestion);
 router.post('/update-question', validateUpdateQuestionData, coordinatorCheck, editor.updateQuestion);
 router.post('/delete-question', coordinatorCheck, editor.deleteQuestion);
+
+router.post('/upload-solution/', coordinatorCheck, fileUpload.single('solutionFile'), editor.solutionUpload);
+
+//=======================================================================================
 
 module.exports = router;
