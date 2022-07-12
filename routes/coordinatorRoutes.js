@@ -16,6 +16,8 @@ router.post('/get-all-exams', coordinatorCheck, coordinator.getAllExams);
 router.post('/get-exam', coordinatorCheck, coordinator.getExam);
 router.post('/declare-result', coordinatorCheck, coordinator.declareResult);
 
+router.post('/search-exams', coordinatorCheck, coordinator.searchExams);
+
 // ========================================================================================================
 
 module.exports = router;

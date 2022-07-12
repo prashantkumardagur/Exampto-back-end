@@ -27,6 +27,9 @@ module.exports.login = async (req, res) => {
   const person = await Person.findOne({ email });
   if(!person) return respondError(res, 'User not found', 404);
 
+  if(person.meta.isBanned === true) return respondError(res, 'User is Banned', 200);
+  if(person.meta.isDisabled === true) return respondError(res, 'User is disabled', 200);
+
   const passwordMatch = await bcrypt.compare(password, person.password);
   if(!passwordMatch) return respondError(res, 'Invalid password', 400);
 

@@ -11,6 +11,9 @@ router.use(authCheck);
 
 router.post('/get-exams', userCheck, user.getExams);
 router.post('/get-results', userCheck, user.getResults);
+router.post('/search-exams', userCheck, user.searchExams);
+
+router.post('/get-practice-exams', userCheck, user.getPracticeExams);
 
 router.post('/get-exam', userCheck, user.getExam);
 router.post('/get-result', userCheck, user.getResult);

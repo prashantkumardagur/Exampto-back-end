@@ -13,6 +13,7 @@ router.use(authCheck);
 
 router.post('/initialize-exam', userCheck, exam.initializeExam);
 router.post('/mark-answer', userCheck, validateAnswer, exam.markAnswer);
+router.post('/count-disconnection', userCheck, exam.countDisconnection);
 router.post('/submit-exam', userCheck, exam.submitExam);
 
 // ========================================================================================================

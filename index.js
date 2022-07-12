@@ -29,7 +29,7 @@ const app = express();
 
 
 // Setting up middlewares
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(cors());
 
 

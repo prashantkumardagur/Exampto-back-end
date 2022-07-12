@@ -84,6 +84,26 @@ module.exports.markAnswer = async (req, res) => {
 }
 
 
+// Count a disconnection
+module.exports.countDisconnection = async (req, res) => {
+  const { resultId } = req.body;
+  if(!resultId) return respondError(res, 'No result id provided', 400);
+
+  try{
+    const result = await Result.findById(resultId);
+    if(!result) return respondError(res, 'Result not found', 404);
+
+    result.meta.disconnections++;
+    await result.save();
+
+    return respondSuccess(res, 'Disconnection counted successfully', result.meta.disconnections);
+
+  } catch(err) {
+    return respondError(res, 'Error in counting disconnection', 500);
+  }
+}
+
+
 // Submit the exam
 module.exports.submitExam = async (req, res) => {
   const { resultId } = req.body;

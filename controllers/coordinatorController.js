@@ -122,3 +122,22 @@ module.exports.declareResult = async (req, res) => {
     respondError(res, err.message, 500);
   }
 }
+
+
+
+// Search for exams
+module.exports.searchExams = async (req, res) => {
+  const search = req.body.search;
+  if(!search) return respondError(res, 'No search query provided', 400);
+  try{
+    let exams = await Exam.find(
+      {$text: {$search: search}, 'meta.isPublished': true, 'meta.isPrivate': false, 'meta.creater': req.person._id},
+      {contents: 0, solutions: 0, answers: 0}
+    ).limit(3);
+    
+    respondSuccess(res, 'Exams fetched', exams);
+
+  } catch(err) {
+    return respondError(res, 'Unable to search', 500);
+  }
+}

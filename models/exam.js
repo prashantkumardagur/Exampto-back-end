@@ -1,9 +1,18 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const contentSchema = new Schema({ 
-    question : String,
-    options : [String]
+const contentSchema = new Schema({
+    question : {
+        text : String,
+        image : String
+    },
+    options : [{
+        kind : {
+            type : String,
+            enum : ['text', 'image']
+        },
+        text : String
+    }]
  }, { _id : false });
 
 const examSchema = Schema({
@@ -35,6 +44,10 @@ const examSchema = Schema({
     contents : [contentSchema],
     answers : [Number],
     meta : {
+        availableForPractice: {
+            type : Boolean,
+            default : false
+        },
         isPublished : {
             type : Boolean,
             default : false
@@ -59,5 +72,7 @@ const examSchema = Schema({
         }
     }
 });
+
+examSchema.index({name: 'text'});
 
 module.exports = mongoose.model('Exam', examSchema);

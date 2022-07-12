@@ -128,6 +128,43 @@ module.exports.getExams = async (req, res) => {
   }
 }
 
+
+// Gets all practice exams of a user
+module.exports.getPracticeExams = async (req, res) => {
+  try{
+    let exams = await Exam.find({
+      'meta.isPublished': true, 
+      'meta.resultDeclared': true, 
+      'meta.isPrivate': false, 
+      startTime: {$lt: Date.now()} 
+    },{contents: 0, solutions: 0});
+    
+    let results = await Result.find({user: req.person._id});
+    let availablePracticeExams = [];
+    let attemptedPracticeExams = [];
+    let myResult = {};
+    let myExam = {};
+    exams.forEach(exam => {
+      myExam = exam.toObject();
+      if(myResult = results.find(result => result.exam.toString() == exam._id.toString())){
+        if(myResult.examType == 'practice'){
+          myExam.totalQuestions = exam.answers.length;
+          myExam.answers = undefined;
+          attemptedPracticeExams.push(myExam);
+        }
+        return;
+      }
+      myExam.totalQuestions = exam.answers.length;
+      myExam.answers = undefined;
+      availablePracticeExams.push(myExam);    
+    });
+
+    respondSuccess(res, 'Practice exams fetched', {availablePracticeExams, attemptedPracticeExams});
+  } catch(err) {
+    return respondError(res, 'Unable to fetch exams', 500);
+  }
+}
+
 // =========================================================================================
 
 // Gets all declared results of a user
@@ -143,5 +180,26 @@ module.exports.getResults = async (req, res) => {
     respondSuccess(res, 'Results fetched', myResults);
   } catch(err) {
     return respondError(res, 'Unable to fetch results', 500);
+  }
+}
+
+
+
+
+
+// Search for exams
+module.exports.searchExams = async (req, res) => {
+  const search = req.body.search;
+  if(!search) return respondError(res, 'No search query provided', 400);
+  try{
+    let exams = await Exam.find(
+      {$text: {$search: search}, 'meta.isPublished': true, 'meta.isPrivate': false },
+      {contents: 0, solutions: 0, answers: 0}
+    ).limit(3);
+    
+    respondSuccess(res, 'Exams fetched', exams);
+
+  } catch(err) {
+    return respondError(res, 'Unable to search', 500);
   }
 }

@@ -1,6 +1,7 @@
 const Exam = require('../models/exam');
 
 const path = require('path');
+const fs = require('fs');
 
 const { respondSuccess, respondError } = require('./utils/responders');
 
@@ -52,13 +53,20 @@ module.exports.updateExamDetails = async (req, res) => {
 // Add new question to the exam
 module.exports.addQuestion = async (req, res) => {
   const id = req.body.id;
-  const { question, options, answer } = req.body.data;
+  const { question, questionImage, options, optionTypes, answer } = req.body.data;
   try{
     const exam = await Exam.findById(id);
     if(!exam) return respondError(res, 'Exam not found', 404);
-    exam.contents.push({ question, options });
+
+    let myoptions = [];
+    optionTypes.forEach((type, index) => {
+      myoptions.push({ kind: type, text: options[index] });
+    })
+
+    exam.contents.push({ question: { text: question, image: questionImage}, options: myoptions });
     exam.answers.push(answer);
     await exam.save();
+
     respondSuccess(res, 'Question added', true);
   } catch(err) {
     respondError(res, 'Failed to add question', 500);
@@ -73,7 +81,15 @@ module.exports.updateQuestion = async (req, res) => {
   try{
     const exam = await Exam.findById(id);
     if(!exam) return respondError(res, 'Exam not found', 404);
-    exam.contents[index] = content;
+
+    exam.contents[index].question.text = content.question;
+    let kindArr = exam.contents[index].options.map((option) => option.kind);
+    exam.contents[index].options = content.options.map((option, i) => {
+                                      return {
+                                        kind : kindArr[i] || 'text',
+                                        text : option
+                                      }
+                                    });
     exam.answers[index] = answer;
     await exam.save();
     respondSuccess(res, 'Question updated', true);
@@ -86,7 +102,7 @@ module.exports.updateQuestion = async (req, res) => {
 module.exports.deleteQuestion = async (req, res) => {
   const id = req.body.id;
   const index = req.body.index;
-  if(!index || !id) return respondError(res, 'Invalid request', 400);
+  if((!index || !id) && index != 0) return respondError(res, 'Invalid request', 400);
   try{
     const exam = await Exam.findById(id);
     if(!exam) return respondError(res, 'Exam not found', 404);
@@ -96,6 +112,31 @@ module.exports.deleteQuestion = async (req, res) => {
     respondSuccess(res, 'Question deleted', true);
   } catch(err) {
     respondError(res, 'Failed to delete question', 500);
+  }
+}
+
+// Deletes the exam
+module.exports.deleteExam = async (req, res) => {
+  const id = req.body.id;
+  if(!id) return respondError(res, 'Exam id not provided', 400);
+  try{
+    const exam = await Exam.findById(id);
+    if(!exam) return respondError(res, 'Exam not found', 404);
+
+    for(let i = 0; i < exam.contents.length; i++) {
+      let content = exam.contents[i];
+      if(content.question.image !== '') 
+        fs.unlinkSync(path.join(__dirname, '../public/images/' + content.question.image));
+      for(let j = 0; j < content.options.length; j++) {
+        if(content.options[j].kind === 'image') 
+          fs.unlinkSync(path.join(__dirname, '../public/images/' + content.options[j].text));
+      }
+    }
+    await exam.remove();
+
+    respondSuccess(res, 'Exam deleted', true);
+  } catch(err) {
+    respondError(res, 'Failed to delete exam', 500);
   }
 }
 
@@ -110,4 +151,20 @@ module.exports.solutionUpload = async (req, res) => {
   } catch(err) {
     respondError(res, 'Failed to upload solution', 500);
   }
+}
+
+// Image upload
+module.exports.imageUpload = async (req, res) => {
+  respondSuccess(res, 'Image uploaded', req.file.filename);
+}
+
+// Delete image
+module.exports.deleteImage = async (req, res) => {
+  const image = req.body.filename;
+  if(!image) return respondError(res, 'Image not provided', 400);
+
+  const imagePath = path.join(__dirname, '../public/images/' + image);
+  if(!fs.existsSync(imagePath)) return respondError(res, 'Image not found', 404);
+  fs.unlinkSync(imagePath);
+  respondSuccess(res, 'Image deleted', true);
 }

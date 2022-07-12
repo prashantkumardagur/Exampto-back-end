@@ -7,7 +7,7 @@ const { respondError } = require('../controllers/utils/responders');
 module.exports.validateAnswer = async (req, res, next) => {
   const schema = joi.object({
     resultId: joi.string().required(),
-    answer: joi.number().min(0).max(4).required(),
+    answer: joi.number().min(0).max(8).required(),
     index: joi.number().min(0).required(),
   }).required();
 

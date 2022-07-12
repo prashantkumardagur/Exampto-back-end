@@ -12,6 +12,11 @@ const resultSchema = Schema({
         ref : 'Exam',
         required : true
     },
+    examType : {
+        type : String,
+        enum : ['live', 'practice'],
+        default : 'live'
+    },
     marksAllocated : {
         type : Number,
         default : 0
