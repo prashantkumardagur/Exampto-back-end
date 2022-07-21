@@ -66,3 +66,43 @@ module.exports.registerUser = async (req, res) => {
 }
 
 
+// Change Password
+module.exports.changePassword = async (req, res) => {
+  const {email, currentPassword, newPassword} = req.body;
+
+  if(req.person.email !== email) return respondError(res, 'Invalid email', 400);
+  try{
+    const person = await Person.findOne({email});
+    if(!person) return respondError(res, 'User not found', 404);
+
+    const passwordMatch = await bcrypt.compare(currentPassword, person.password);
+    if(!passwordMatch) return respondError(res, 'Invalid password', 400);
+
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    await Person.findByIdAndUpdate(req.person._id, {password: hashedPassword});
+
+    respondSuccess(res, 'Password changed', true);
+
+  } catch(err) {
+    respondError(res, 'Failed to change password', 500);
+  }
+}
+
+// Update profile
+module.exports.updateProfile = async (req, res) => {
+  const {name, phone, gender} = req.body;
+  try{
+    const person = Person.findByIdAndUpdate( 
+      req.person._id, 
+      {$set: {name, phone, gender}}, 
+      function(err, result){ if(err) console.log(err); }
+    );
+    if(!person) return respondError(res, "Unable to update user", 400);
+
+    respondSuccess(res, "Profile updated successfully", true);
+
+  } catch(err) {
+    respondError(res, err.message, 500);
+  }
+}
+

@@ -133,8 +133,9 @@ module.exports.getExams = async (req, res) => {
 module.exports.getPracticeExams = async (req, res) => {
   try{
     let exams = await Exam.find({
+      'meta.availableForPractice': true,
       'meta.isPublished': true, 
-      'meta.resultDeclared': true, 
+      'meta.resultDeclared': true,
       'meta.isPrivate': false, 
       startTime: {$lt: Date.now()} 
     },{contents: 0, solutions: 0});
@@ -146,16 +147,15 @@ module.exports.getPracticeExams = async (req, res) => {
     let myExam = {};
     exams.forEach(exam => {
       myExam = exam.toObject();
+      myExam.totalQuestions = exam.answers.length;
+      myExam.answers = undefined;
+
       if(myResult = results.find(result => result.exam.toString() == exam._id.toString())){
-        if(myResult.examType == 'practice'){
-          myExam.totalQuestions = exam.answers.length;
-          myExam.answers = undefined;
+        if(myResult.examType == 'Practice'){
           attemptedPracticeExams.push(myExam);
         }
         return;
       }
-      myExam.totalQuestions = exam.answers.length;
-      myExam.answers = undefined;
       availablePracticeExams.push(myExam);    
     });
 
@@ -170,7 +170,7 @@ module.exports.getPracticeExams = async (req, res) => {
 // Gets all declared results of a user
 module.exports.getResults = async (req, res) => {
   try{
-    let results = await Result.find({user: req.person._id}).populate('exam', {meta: 1, name: 1});
+    let results = await Result.find({user: req.person._id, 'meta.ended': true}).populate('exam', {meta: 1, name: 1});
 
     let myResults = [];
     results.forEach(result => {

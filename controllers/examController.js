@@ -9,6 +9,7 @@ const { respondSuccess, respondError } = require('./utils/responders');
 // Gets a specific exam details
 module.exports.initializeExam = async (req, res) => {
   const id = req.body.id;
+  let examType = 'Live';
   if(!id) return respondError(res, 'No exam id provided', 400);
 
   try{
@@ -16,26 +17,38 @@ module.exports.initializeExam = async (req, res) => {
     if(!exam) return respondError(res, 'Exam not found', 404);
 
     if(exam.startTime > Date.now()) return respondError(res, 'Exam not started yet', 400);
-    else if(exam.lastStartTime + exam.duration * 60 * 1000 < Date.now()) return respondError(res, 'Exam has ended', 400);
 
 
     let result = await Result.findOne({user: req.person._id, exam: id});
 
+    
+    if(exam.lastStartTime + exam.duration * 60 * 1000 < Date.now()){
+      if(exam.meta.resultDeclared && exam.meta.availableForPractice) examType = 'Practice';
+      else return respondError(res, 'Exam has ended', 400);
+    }
+
     if(result){
       if(result.meta.ended) return respondError(res, 'Exam already ended', 400);
-      else if(result.meta.startedOn + exam.duration * 60 * 1000 < Date.now()) return respondError(res, 'Exam has ended', 400);
+      else if(result.meta.startedOn + exam.duration * 60 * 1000 < Date.now()) {
+        result.meta.ended = true;
+        result.meta.endedOn = Date.now();
+        await result.save();
+        return respondError(res, 'Exam has ended', 400);
+      }
 
       return respondSuccess(res, 'Exam fetched successfully', {
         exam, 
         responses: result.responses, 
         startedOn: result.meta.startedOn,
-        resultId: result._id
+        resultId: result._id,
+        resultExamType: result.examType
       });
     } 
 
     result = new Result({
       user: req.person._id,
       exam: id,
+      examType: examType,
       responses: Array(exam.contents.length).fill(0),
       meta: {
         startedOn: Date.now(),
@@ -50,7 +63,8 @@ module.exports.initializeExam = async (req, res) => {
       exam, 
       responses: result.responses, 
       startedOn: result.meta.startedOn,
-      resultId: result._id
+      resultId: result._id,
+      resultExamType: examType
     });
 
   } catch(err) {

@@ -14,7 +14,7 @@ const resultSchema = Schema({
     },
     examType : {
         type : String,
-        enum : ['live', 'practice'],
+        enum : ['Live', 'Practice'],
         default : 'live'
     },
     marksAllocated : {
