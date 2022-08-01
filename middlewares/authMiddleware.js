@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const Person = require('../models/person');
 const { respondError } = require('../controllers/utils/responders');
 
-const jwtSecret = process.env.JWT_SECRET || 'server_secret';
+const jwtSecret = process.env.JWT_SECRET;
 
 // ========================================================================================================
 

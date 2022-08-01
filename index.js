@@ -11,13 +11,13 @@ const bodyParser = require('body-parser');
 
 // Setting up mongoDB / mongoose
 const mongoose = require('mongoose');
-const dbURL = process.env.DB_URI || 'mongodb+srv://prashantkumar:Password024680@testcluster.8xzqf.mongodb.net/exampto?retryWrites=true&w=majority';
+const dbURL = process.env.DB_URI;
 
 
 // Connecting to mongoDB
 mongoose.connect(dbURL, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB Connected'))
-  .catch(err => console.log(err));
+  .catch(err => process.exit());
 
 
 
@@ -82,14 +82,14 @@ app.all('*', (req, res) => {
 // Error handling
 app.use((err, req, res, next) => {
   let { status = 500, msg = 'Something went wrong', message} = err;
-  res.status(status).send({msg , message, stack: err.stack});
+  res.status(status).send({msg , message});
   next();
 })
 
 
 
 // Setting up server
-const port = process.env.PORT || 8080;
+const port = process.env.PORT;
 app.listen(port, () => {
   console.log('App started at port 8080');
 })
