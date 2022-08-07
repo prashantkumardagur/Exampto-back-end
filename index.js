@@ -1,3 +1,5 @@
+require('dotenv').config()
+
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -51,6 +53,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const coordinatorRoutes = require('./routes/coordinatorRoutes');
 const examRoutes = require('./routes/examRoutes');
 const editorRoutes = require('./routes/editorRoutes');
+const publicRoutes = require('./routes/publicRoutes');
 
 
 // Setting up routes
@@ -60,6 +63,7 @@ app.use('/admin', adminRoutes);
 app.use('/coordinator', coordinatorRoutes);
 app.use('/exam', examRoutes);
 app.use('/editor', editorRoutes);
+app.use('/public', publicRoutes);
 
 
 // Default home route

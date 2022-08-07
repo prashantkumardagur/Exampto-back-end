@@ -14,6 +14,7 @@ router.post('/get-coordinators', adminCheck, admin.getCoordinators);
 router.post('/get-users', adminCheck, admin.getUsers);
 router.post('/create-new-coordinator', adminCheck, validateNewCoordinatorData, admin.createNewCoordinator);
 router.post('/toggle-ban', adminCheck, admin.toggleBan);
+router.post('/get-messages', adminCheck, admin.getMessages);
 
 router.post('/search-exams', adminCheck, admin.searchExams);
 

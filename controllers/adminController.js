@@ -1,5 +1,6 @@
 const Person = require('../models/person');
 const Exam = require('../models/exam');
+const Public = require('../models/public');
 const bcrypt = require('bcryptjs');
 
 const { respondSuccess, respondError } = require('./utils/responders');
@@ -87,5 +88,19 @@ module.exports.searchExams = async (req, res) => {
 
   } catch(err) {
     return respondError(res, 'Unable to search', 500);
+  }
+}
+
+
+// Get messages for admin
+module.exports.getMessages = async (req, res) => {
+  try{
+    let public = await Public.findOne({}, {messages: 1});
+    if(!public) return respondError(res, 'No messages found', 404);
+
+    respondSuccess(res, 'Messages fetched', public.messages);
+  
+  } catch(err) {
+    return respondError(res, 'Unable to fetch messages', 500);
   }
 }
