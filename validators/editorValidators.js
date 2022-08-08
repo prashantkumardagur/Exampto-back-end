@@ -33,7 +33,7 @@ module.exports.validateNewQuestionData = async (req, res, next) => {
   const schema = joi.object({
     id: joi.string().required(),
     data: joi.object({
-      question: joi.string().min(3).max(4096).required(),
+      question: joi.string().max(4096).allow('').required(),
       questionImage: joi.string().allow('').max(256).required(),
       optionTypes: joi.array().items(joi.string().valid('text', 'image')).required(),
       options: joi.array().items(joi.string().min(1).max(1024).required()).required(),
@@ -53,7 +53,7 @@ module.exports.validateUpdateQuestionData = async (req, res, next) => {
     id: joi.string().required(),
     index: joi.number().min(0).required(),
     content: joi.object({
-      question: joi.string().min(3).max(4096).required(),
+      question: joi.string().max(4096).allow('').required(),
       options: joi.array().items(joi.string().min(1).max(1024).required()).required()
     }),
     answer: joi.number().min(0).max(8).required(),
