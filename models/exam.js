@@ -23,7 +23,6 @@ const examSchema = Schema({
     },
     category : [{ 
         type : String,
-        enum : ['JEE', 'NEET', 'SSC'],
         required : true
     }],
     marking : {

@@ -9,7 +9,7 @@ module.exports.validateUpdateExamData = async (req, res, next) => {
     id: joi.string().required(),
     examData: joi.object({
       name: joi.string().min(3).max(64).required().regex(/^[\w\-\s]*$/),
-      category: joi.array().items(joi.string().valid('JEE', 'NEET', 'SSC')).required(),
+      category: joi.array().items(joi.string()).required(),
       price: joi.number().min(0).required(),
       duration: joi.number().min(10).max(60*24).required(),
       startTime: joi.number().min(0).required(),
@@ -19,6 +19,7 @@ module.exports.validateUpdateExamData = async (req, res, next) => {
         negative: joi.number().min(0).max(1000).required(),
       }).required(),
       "meta.isPrivate": joi.boolean().required(),
+      "meta.availableForPractice": joi.boolean().required(),
     }).required()
   }).required();
 

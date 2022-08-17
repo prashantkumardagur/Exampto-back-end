@@ -115,7 +115,38 @@ module.exports.declareResult = async (req, res) => {
 
     if (!exam) { return respondError(res, 'Exam not found', 404); }
 
-    await Result.updateMany({ exam: id },{ $set: { 'meta.ended': true, 'meta.endedOn': Date.now() } } );
+
+    let marksScored = 0;
+    let totalQuestions = exam.contents.length;
+    let results = await Result.find({ exam: id });
+    let totalResults = results.length;
+
+    results.forEach((result) => {
+      for(let i=0; i<totalQuestions; i++) {
+        if(result.responses[i] === exam.answers[i]) marksScored += exam.marking.positive;
+        else if(result.responses[i] === 0 ) marksScored += 0;
+        else marksScored -= exam.marking.negative;
+      }
+      result.marksAllocated = marksScored;
+
+      result.meta.ended = true;
+      if(result.meta.endedOn === undefined) result.meta.endedOn = Date.now();
+      marksScored = 0;
+    })
+
+    results.sort((a, b) => {
+      return b.marksAllocated - a.marksAllocated;
+    })
+
+    let rank = 0;
+    let percentileGap = ( 100 / (totalResults-1) ).toFixed(2);
+    let percentile = 100;
+    results.forEach((result) => {
+      result.rank = ++rank;
+      result.percentile = percentile.toFixed(2);
+      percentile -= percentileGap;
+      result.save();
+    })
 
     respondSuccess(res, 'Result declared', true);
   } catch (err) {
