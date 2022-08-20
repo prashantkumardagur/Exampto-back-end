@@ -112,7 +112,14 @@ module.exports.getExams = async (req, res) => {
       enrolledExams.push(myExam);
     });
 
-    let exams = await Exam.find({'meta.isPublished': true, 'meta.isPrivate': false, startTime: {$gt: Date.now()} }, {contents: 0, solutions: 0});
+    let exams = await Exam.find({
+      'meta.isPublished': true, 
+      'meta.isPrivate': false, 
+      startTime: {$gt: Date.now()} 
+    }, {
+      contents: 0, 
+      solutions: 0
+    });
     let availableExams = [];
     exams.forEach(exam => {
       myExam = exam.toObject();

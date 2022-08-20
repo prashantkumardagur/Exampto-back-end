@@ -28,7 +28,7 @@ const personSchema = new Schema({
     gender : String,
     program : { 
         type: String,
-        enum: ['JEE', 'NEET', 'SSC']
+        default: 'JEE'
     },
     nationality : String,
     institution : {

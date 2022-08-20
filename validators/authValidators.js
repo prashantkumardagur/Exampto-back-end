@@ -10,6 +10,7 @@ module.exports.validateRegistrationData = async (req, res, next) => {
       name: joi.string().min(3).max(32).required().regex(/^[a-zA-Z ]*$/),
       email: joi.string().min(3).max(64).required().email(),
       password: joi.string().min(6).max(32).required().regex(/^[^<>%$()]*$/),
+      program: joi.string().required()
   }).required();
 
   const result = schema.validate(req.body);
@@ -48,7 +49,8 @@ module.exports.validateProfileData = async (req, res, next) => {
     const schema = joi.object({
         name: joi.string().min(3).max(32).required().regex(/^[a-zA-Z ]*$/),
         phone: joi.string().min(3).max(32).required().regex(/^[0-9]*$/),
-        gender: joi.string().valid("Male", "Female", "Other").required()
+        gender: joi.string().valid("Male", "Female", "Other").required(),
+        program: joi.string().required()
     }).required();
 
     const result = schema.validate(req.body);

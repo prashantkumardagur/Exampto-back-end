@@ -15,6 +15,11 @@ const messageSchema = new Schema({
   createdAt: {
     type: Number,
     required: true
+  },
+  isResolved: {
+    type: Boolean,
+    required: true,
+    default: false
   }
 })
 

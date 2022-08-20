@@ -47,7 +47,8 @@ module.exports.logout = async (req, res) => {
 
 // User registration
 module.exports.registerUser = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, program } = req.body;
+  console.log(program)
 
   const existingUser = await Person.findOne({ email });
   if(existingUser) return respondError(res, 'User already exists', 400);
@@ -55,7 +56,7 @@ module.exports.registerUser = async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, 12);
 
 
-  const person = new Person({ name, email, password : hashedPassword, role: 'user' });
+  const person = new Person({ name, email, program, password : hashedPassword, role: 'user' });
   try {
     await person.save();
     person.password = undefined;
@@ -90,11 +91,11 @@ module.exports.changePassword = async (req, res) => {
 
 // Update profile
 module.exports.updateProfile = async (req, res) => {
-  const {name, phone, gender} = req.body;
+  const {name, phone, gender, program} = req.body;
   try{
     const person = Person.findByIdAndUpdate( 
       req.person._id, 
-      {$set: {name, phone, gender}}, 
+      {$set: {name, phone, gender, program}}, 
       function(err, result){ if(err) console.log(err); }
     );
     if(!person) return respondError(res, "Unable to update user", 400);
