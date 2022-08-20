@@ -104,3 +104,45 @@ module.exports.getMessages = async (req, res) => {
     return respondError(res, 'Unable to fetch messages', 500);
   }
 }
+
+// Toggle message resolve status
+module.exports.toggleMessageResolve = async (req, res) => {
+  const { id } = req.body;
+  if(!id) return respondError(res, 'No message id provided', 400);
+
+  try {
+    const public = await Public.findOne({}, {messages: 1});
+    if(!public) return respondError(res, 'No messages found', 404);
+
+    const message = public.messages.find(message => message._id == id);
+    if(!message) return respondError(res, 'Message not found', 404);
+
+    message.isResolved = !message.isResolved;
+    await public.save();
+
+    respondSuccess(res, 'Message resolved toggled', true);
+  } catch (err) {
+    respondError(res, 'Failed to toggle message resolve status', 400);
+  }
+}
+
+// Delete message
+module.exports.deleteMessage = async (req, res) => {
+  const { id } = req.body;
+  if(!id) return respondError(res, 'No message id provided', 400);
+
+  try {
+    const public = await Public.findOne({}, {messages: 1});
+    if(!public) return respondError(res, 'No messages found', 404);
+
+    const message = public.messages.find(message => message._id == id);
+    if(!message) return respondError(res, 'Message not found', 404);
+
+    public.messages.pull(message);
+    await public.save();
+
+    respondSuccess(res, 'Message deleted', true);
+  } catch (err) {
+    respondError(res, 'Failed to delete message', 400);
+  }
+}

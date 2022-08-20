@@ -114,7 +114,8 @@ module.exports.getExams = async (req, res) => {
 
     let exams = await Exam.find({
       'meta.isPublished': true, 
-      'meta.isPrivate': false, 
+      'meta.isPrivate': false,
+      category: {$in: [person.program]},
       startTime: {$gt: Date.now()} 
     }, {
       contents: 0, 
