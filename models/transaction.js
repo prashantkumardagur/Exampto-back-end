@@ -1,24 +1,39 @@
 const mongoose = require('mongoose');
-const { Schema } = mongoose.Schema;
+const Schema = mongoose.Schema;
 
 const transactionSchema = Schema({
-    transactionId : String,
-    status : { enum : ['success', 'failed', 'pending'] },
+    paymentId : String,
+    eventId : String,
+    status : { 
+        type: String,
+        enum : ['success', 'failed', 'pending'],
+        default : 'pending'
+    },
     amount : Number,
-    currency : String,
-    gateway : String,
-    payee : String,
+    method : {
+        type : String,
+        default : 'internal'
+    },
+    currency : {
+        type : String,
+        default : 'EXAMPTO_COINS'
+    },
     user : {
         type : Schema.Types.ObjectId,
         ref : 'Person'
     },
-    timeStamp : Date,
-    isRefunded : Boolean,
-    refundId : String,
+    timeStamp : {
+        type : Number,
+        default : Date.now()
+    },
+    razorpayEntity : Object,
     meta : {
-        type : String,
-        ip : String,
-        description : String
+        title : String,
+        description : String,
+        kind : {
+            type : String,
+            enum : ['withdraw', 'deposit', 'credit', 'debit']
+        }
     }
 });
 

@@ -42,12 +42,15 @@ const personSchema = new Schema({
             min : 0,
             default : 0
         },
-        transactions : {
+        transactions : [{
             type : Schema.Types.ObjectId,
             ref : 'Transaction'
-        },
+        }],
         withdrawDetails : {
-            method : String,
+            method : {
+                type : String,
+                default : 'upi'
+            },
             id : String
         }
     },

@@ -1,6 +1,7 @@
 const Exam = require('../models/exam');
 const Person = require('../models/person');
 const Result = require('../models/result');
+const Transaction = require('../models/transaction');
 
 const path = require('path');
 
@@ -83,11 +84,28 @@ module.exports.enroll = async (req, res) => {
     if(!person) return respondError(res, 'Unable to enroll', 500);
     if(person.examsEnrolled.includes(id)) return respondError(res, 'You are already enrolled in this exam', 400);
 
+    if(person.wallet.coins < exam.price) return respondError(res, 'Insufficient balance', 400);
+
+    let transaction = new Transaction({
+      user: req.person._id,
+      status: 'success',
+      amount: exam.price,
+      meta: {
+        title: "Enrolled in exam",
+        description: "Exam name: " + exam.name,
+        kind: "debit"
+      }
+    });
+    await transaction.save();
+
+    person.wallet.coins -= exam.price;
     person.examsEnrolled.push(id);
+    person.wallet.transactions.push(transaction._id);
     await person.save();
 
     exam.meta.studentsEnrolled++;
     await exam.save();
+
 
     respondSuccess(res, 'Exam enrolled', true);
 
@@ -103,7 +121,7 @@ module.exports.enroll = async (req, res) => {
 module.exports.getExams = async (req, res) => {
   try{
     let myExam;
-    let person = await Person.findById(req.person._id, {examsEnrolled: 1}).populate('examsEnrolled', {contents: 0, solutions: 0});
+    let person = await Person.findById(req.person._id, {examsEnrolled: 1, program: 1}).populate('examsEnrolled', {contents: 0, solutions: 0});
     let enrolledExams = [];
     person.examsEnrolled.forEach(exam => {
       myExam = exam.toObject();
@@ -194,6 +212,73 @@ module.exports.getResults = async (req, res) => {
 
 
 
+// Get wallet data of a user
+module.exports.getWallet = async (req, res) => {
+  try{
+    let person = await Person.findById(req.person._id, {wallet: 1}).populate('wallet.transactions');
+    if(!person) return respondError(res, 'Unable to fetch wallet', 500);
+
+    respondSuccess(res, 'Wallet fetched', person.wallet);
+  } catch(err) {
+    return respondError(res, 'Unable to fetch wallet', 500);
+  }
+}
+
+// Update withdraw details of a user
+module.exports.updateWithdrawDetails = async (req, res) => {
+  if(!req.body.upiId) respondError(res, 'No UPI Id provided', 400);
+  try{
+    let person = await Person.findById(req.person._id);
+    if(!person) return respondError(res, 'Unable to fetch wallet', 500);
+
+    person.wallet.withdrawDetails.id = req.body.upiId;
+    await person.save();
+
+    respondSuccess(res, 'Wallet updated', person.wallet);
+
+  } catch(err) {
+    return respondError(res, 'Unable to update wallet', 500);
+  }
+}
+
+// Request for withdraw
+module.exports.requestWithdraw = async (req, res) => {
+  if(!req.body.amount) respondError(res, 'No amount provided', 400);
+  let amount = parseInt(req.body.amount);
+  try{
+    let person = await Person.findById(req.person._id);
+    if(!person) return respondError(res, 'Unable to fetch wallet', 500);
+
+    if(person.wallet.coins < amount) return respondError(res, 'Insufficient balance', 400);
+    
+    let transaction = new Transaction({
+      user: req.person._id,
+      status: 'pending',
+      amount: amount,
+      method: 'upi',
+      currency: 'INR',
+      meta: {
+        title: "Withdraw request",
+        description: `Amount: ${amount} INR & UPI Id: ${person.wallet.withdrawDetails.id}. (Pending)`,
+        kind: "withdraw"
+      }
+    });
+    await transaction.save();
+
+    person.wallet.coins -= amount;
+    person.wallet.transactions.push(transaction._id);
+    await person.save();
+
+    respondSuccess(res, 'Withdraw request sent', true);
+
+  } catch(err) {
+    return respondError(res, 'Unable to withdraw', 500);
+  }
+}
+
+
+
+
 
 // Search for exams
 module.exports.searchExams = async (req, res) => {
@@ -211,3 +296,5 @@ module.exports.searchExams = async (req, res) => {
     return respondError(res, 'Unable to search', 500);
   }
 }
+
+

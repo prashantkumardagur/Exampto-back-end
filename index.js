@@ -55,6 +55,8 @@ const examRoutes = require('./routes/examRoutes');
 const editorRoutes = require('./routes/editorRoutes');
 const publicRoutes = require('./routes/publicRoutes');
 
+const webhooks = require('./routes/webhooks');
+
 
 // Setting up routes
 app.use('/auth', authRoutes);
@@ -64,6 +66,7 @@ app.use('/coordinator', coordinatorRoutes);
 app.use('/exam', examRoutes);
 app.use('/editor', editorRoutes);
 app.use('/public', publicRoutes);
+app.use('/webhooks', webhooks);
 
 
 // Default home route

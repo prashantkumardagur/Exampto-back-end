@@ -19,6 +19,11 @@ router.post('/get-messages', adminCheck, admin.getMessages);
 router.post('/toggle-message-resolve', adminCheck, admin.toggleMessageResolve);
 router.post('/delete-message', adminCheck, admin.deleteMessage);
 
+router.post('/get-payments', adminCheck, admin.getPayments);
+router.post('/get-pending-payments', adminCheck, admin.getPendingPayments);
+router.post('/reject-payment', adminCheck, admin.rejectPayment);
+router.post('/approve-payment', adminCheck, admin.approvePayment);
+
 router.post('/search-exams', adminCheck, admin.searchExams);
 
 // ========================================================================================================

@@ -1,6 +1,8 @@
 const Person = require('../models/person');
 const Exam = require('../models/exam');
 const Public = require('../models/public');
+const Transaction = require('../models/transaction');
+
 const bcrypt = require('bcryptjs');
 
 const { respondSuccess, respondError } = require('./utils/responders');
@@ -144,5 +146,82 @@ module.exports.deleteMessage = async (req, res) => {
     respondSuccess(res, 'Message deleted', true);
   } catch (err) {
     respondError(res, 'Failed to delete message', 400);
+  }
+}
+
+
+
+// Get peyments
+module.exports.getPayments = async (req, res) => {
+  try{
+    let transactions = await Transaction.find({
+      $or: [{"meta.kind": "withdraw"}, {"meta.kind": "deposit"}]
+    }).populate('user');
+    respondSuccess(res, 'Payments fetched', transactions);
+
+  } catch(err) {
+    return respondError(res, 'Unable to fetch payments', 500);
+  }
+}
+
+
+// Get pending payments
+module.exports.getPendingPayments = async (req, res) => {
+  try{
+    let transactions = await Transaction.find({status: 'pending'}).populate('user');
+    respondSuccess(res, 'Payments fetched', transactions);
+
+  } catch(err) {
+    return respondError(res, 'Unable to fetch payments', 500);
+  }
+}
+
+// Reject payment request
+module.exports.rejectPayment = async (req, res) => {
+  const { id } = req.body;
+  if(!id) return respondError(res, 'No payment id provided', 400);
+
+  try {
+    const transaction = await Transaction.findById(id);
+    if(!transaction) return respondError(res, 'Payment not found', 404);
+
+    const user = await Person.findById(transaction.user);
+    if(!user) return respondError(res, 'User not found', 404);
+
+    transaction.status = 'failed';
+    transaction.meta.description = 'Request rejected by admin. Contact support for more info.';
+    await transaction.save();
+
+    user.wallet.coins += transaction.amount;
+    await user.save();
+
+    respondSuccess(res, 'Payment rejected', true);
+  } catch (err) {
+    respondError(res, 'Failed to reject payment', 400);
+  }
+}
+
+// Approve payment request
+module.exports.approvePayment = async (req, res) => {
+  const { tid, pid } = req.body;
+  if(!tid || !pid) return respondError(res, 'Data not sufficient', 400);
+
+  try {
+    const transaction = await Transaction.findById(pid);
+    if(!transaction) return respondError(res, 'Payment not found', 404);
+
+    const user = await Person.findById(transaction.user);
+    if(!user) return respondError(res, 'User not found', 404);
+
+    transaction.status = 'success';
+    transaction.paymentId = tid;
+    transaction.meta.title = 'Withdrawal completed';
+    transaction.meta.description = 'UPI Transaction ID: ' + tid;
+    await transaction.save();
+
+    respondSuccess(res, 'Payment approved', true);
+
+  } catch (err) {
+    respondError(res, 'Failed to approve payment', 400);
   }
 }
