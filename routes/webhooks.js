@@ -30,7 +30,7 @@ router.post('/payment', async (req, res) => {
         razorpayEntity: data,
         meta: {
           title: "Coins purchased",
-          description: `Transaction ID: ${data.id}`,
+          description: `Transaction ID: ${data.id} ${data.status !== 'captured' && 'Failed'}`,
           kind: 'deposit'
         }
       });
@@ -40,7 +40,7 @@ router.post('/payment', async (req, res) => {
       if(user){
         transaction.user = user._id;
         await transaction.save();
-        user.wallet.coins += (data.amount / 100);
+        if(data.status === 'captured') user.wallet.coins += (data.amount / 100);
         user.wallet.transactions.push(transaction._id);
         await user.save();
       } else {
