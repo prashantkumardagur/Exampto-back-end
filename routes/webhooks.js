@@ -8,6 +8,10 @@ const { validateWebhookSignature } = require('razorpay/dist/utils/razorpay-utils
 
 // =============================================================================================================
 
+router.get('/payment', (req, res) => {
+  res.send('This is a webhook route. Do POST request to this route to verify payment.');
+});
+
 router.post('/payment', async (req, res) => {
     let receivedSignature = req.headers['x-razorpay-signature'];
     let secret = process.env.RAZORPAY_SECRET;
@@ -30,7 +34,7 @@ router.post('/payment', async (req, res) => {
         razorpayEntity: data,
         meta: {
           title: "Coins purchased",
-          description: `Transaction ID: ${data.id} ${data.status !== 'captured' && 'Failed'}`,
+          description: `Transaction ID: ${data.id}`,
           kind: 'deposit'
         }
       });

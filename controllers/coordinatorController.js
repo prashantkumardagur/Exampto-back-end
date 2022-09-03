@@ -1,5 +1,6 @@
 const Exam = require('../models/exam');
 const Result = require('../models/result');
+const Transaction = require('../models/transaction');
 
 const { respondSuccess, respondError } = require('./utils/responders');
 
@@ -118,7 +119,7 @@ module.exports.declareResult = async (req, res) => {
 
     let marksScored = 0;
     let totalQuestions = exam.contents.length;
-    let results = await Result.find({ exam: id });
+    let results = await Result.find({ exam: id }).populate('user');
     let totalResults = results.length;
 
     results.forEach((result) => {
@@ -145,8 +146,39 @@ module.exports.declareResult = async (req, res) => {
       result.rank = ++rank;
       result.percentile = percentile.toFixed(2);
       percentile -= percentileGap;
-      result.save();
-    })
+    });
+
+    
+    let prize10 = Math.floor(exam.price * 2.2);
+    let prize15 = Math.floor(exam.price * 1.46);
+    let prize25 = Math.floor(exam.price * 0.88);
+
+    let awardMoney;
+    let transaction;
+    results.forEach((result) => {
+      if(result.percentile > 90) awardMoney = prize10; 
+      else if(result.percentile > 75) awardMoney = prize15;
+      else if(result.percentile > 50) awardMoney = prize25;
+      else return;
+
+      transaction = new Transaction({
+        user: result.user._id,
+        amount: awardMoney,
+        status: 'success',
+        meta: {
+          title: 'Prize money awarded',
+          description: `Exam: ${exam.name}`,
+          kind: 'credit',
+        }
+      });
+      transaction.save();
+      result.user.wallet.coins += awardMoney;
+      result.user.wallet.transactions.push(transaction._id);
+      result.user.save();
+      result.save();      
+    });    
+
+
 
     respondSuccess(res, 'Result declared', true);
   } catch (err) {

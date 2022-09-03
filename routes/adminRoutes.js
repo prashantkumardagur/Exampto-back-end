@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { validateNewCoordinatorData} = require('../validators/adminValidators');
+const { validateNewCoordinatorData, validateNewTransactionData } = require('../validators/adminValidators');
 const { authCheck, adminCheck } = require('../middlewares/authMiddleware');
 
 const admin = require('../controllers/adminController');
@@ -23,6 +23,8 @@ router.post('/get-payments', adminCheck, admin.getPayments);
 router.post('/get-pending-payments', adminCheck, admin.getPendingPayments);
 router.post('/reject-payment', adminCheck, admin.rejectPayment);
 router.post('/approve-payment', adminCheck, admin.approvePayment);
+router.post('/change-transaction-email', adminCheck, admin.changeTransactionEmail);
+router.post('/add-transaction', adminCheck, validateNewTransactionData, admin.addTransaction);
 
 router.post('/search-exams', adminCheck, admin.searchExams);
 

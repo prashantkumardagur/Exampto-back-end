@@ -24,7 +24,7 @@ module.exports.getCoordinators = async (req, res) => {
 // Gets list of all users
 module.exports.getUsers = async (req, res) => {
   try{
-    let users = await Person.find({role: 'user'}, {name: 1, email: 1, _id: 1, meta: 1});
+    let users = await Person.find({role: 'user'}, {name: 1, email: 1, role: 1, _id: 1, meta: 1, 'wallet.coins': 1});
     respondSuccess(res, 'Users fetched', users);
   } catch(err) {
     respondError(res, 'Unable to fetch users', 500);
@@ -223,5 +223,65 @@ module.exports.approvePayment = async (req, res) => {
 
   } catch (err) {
     respondError(res, 'Failed to approve payment', 400);
+  }
+}
+
+
+// Change transaction email and related user
+module.exports.changeTransactionEmail = async (req, res) => {
+  const { id, email } = req.body;
+  if(!id || !email) return respondError(res, 'Data not sufficient', 400);
+
+  try {
+    const transaction = await Transaction.findById(id);
+    if(!transaction) return respondError(res, 'Payment not found', 404);
+
+    const user = await Person.findOne({email});
+    if(!user) return respondError(res, 'User not found', 404);
+
+    transaction.user = user._id;
+    transaction.status = 'success';
+    await transaction.save();
+    user.wallet.coins += transaction.amount;
+    user.wallet.transactions.push(transaction._id);
+    await user.save();
+
+    respondSuccess(res, 'Payment email changed', true);
+
+  } catch (err) {
+    respondError(res, 'Failed to change payment email', 400);
+  }
+}
+
+
+// Add transaction for a user
+module.exports.addTransaction = async (req, res) => {
+  const {uid, amount, type, description} = req.body;
+
+  try{
+    const person = await Person.findById(uid);
+    if(!person) return respondError(res, 'User not found', 404);
+
+    const transaction = new Transaction({
+      user: uid,
+      status: 'success',
+      amount,
+      meta: {
+        kind: type,
+        description,
+        title: 'Transaction added by admin'
+      }
+    });
+
+
+    type === 'credit' ? person.wallet.coins += parseInt(amount) : person.wallet.coins -= parseInt(amount);
+    person.wallet.transactions.push(transaction._id);
+    await person.save();
+    await transaction.save();
+
+    respondSuccess(res, 'Transaction added successfully', true);
+
+  } catch(err) {
+    respondError(res, err.message, 400);
   }
 }

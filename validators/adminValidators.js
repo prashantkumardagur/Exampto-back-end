@@ -17,3 +17,19 @@ module.exports.validateNewCoordinatorData = async (req, res, next) => {
   next();
   
 }
+
+
+
+module.exports.validateNewTransactionData = async (req, res, next) => {
+
+  const schema = joi.object({
+    amount: joi.number().min(0).required(),
+    type: joi.string().valid('credit', 'debit').required(),
+    uid: joi.string().required(),
+    description: joi.string().required()
+  }).required();
+
+  const result = schema.validate(req.body);
+  if(result.error) return respondError(res, result.error.details[0].message, 400);
+  next();
+}
