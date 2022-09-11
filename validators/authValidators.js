@@ -9,6 +9,7 @@ module.exports.validateRegistrationData = async (req, res, next) => {
   const schema = joi.object({
       name: joi.string().min(3).max(32).required().regex(/^[a-zA-Z ]*$/),
       email: joi.string().min(3).max(64).required().email(),
+      phone: joi.string().min(6).max(12).required().regex(/^[0-9]*$/),
       password: joi.string().min(6).max(32).required().regex(/^[^<>%$()]*$/),
       program: joi.string().required(),
       gender: joi.string().allow("Male", "Female", "Other", "Prefer not to say").required()

@@ -120,7 +120,6 @@ module.exports.declareResult = async (req, res) => {
     let marksScored = 0;
     let totalQuestions = exam.contents.length;
     let results = await Result.find({ exam: id }).populate('user');
-    let totalResults = results.length;
 
     results.forEach((result) => {
       for(let i=0; i<totalQuestions; i++) {
@@ -140,7 +139,7 @@ module.exports.declareResult = async (req, res) => {
     })
 
     let rank = 0;
-    let percentileGap = ( 100 / (totalResults-1) ).toFixed(2);
+    let percentileGap = ( 100 / (exam.meta.studentsEnrolled -1) ).toFixed(2);
     let percentile = 100;
     results.forEach((result) => {
       result.rank = ++rank;

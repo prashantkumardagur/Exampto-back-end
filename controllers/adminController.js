@@ -2,12 +2,81 @@ const Person = require('../models/person');
 const Exam = require('../models/exam');
 const Public = require('../models/public');
 const Transaction = require('../models/transaction');
+const Result = require('../models/result');
 
 const bcrypt = require('bcryptjs');
 
 const { respondSuccess, respondError } = require('./utils/responders');
 
 //=======================================================================================
+
+// Get analytics
+module.exports.getAnalytics = async (req, res) => {
+  try{
+    let liveExams = 0, completedExams = 0, practiceExams = 0;
+    let enrolledStudents = 0, participation = 0, practiceAttmepts = 0;
+    let moneyRecieved = 0, profit = 0, moneyCollected = 0, prizeDistributed = 0, prizePending = 0;
+
+
+    let exams = await Exam.find({"meta.isPublished": true}, {meta: 1, price: 1});
+    let students = await Person.find({role: 'user'}, {wallet: 1, meta: 1});
+    let results = await Result.find({}, {examType: 1});
+    let transactions = await Transaction.find({}, {amount: 1, meta: 1});
+
+    exams.forEach(exam => {
+      if(exam.meta.resultDeclared) {
+        ++completedExams;
+        if(exam.meta.availableForPractice) ++practiceExams;
+        
+        prizeDistributed += Math.floor(exam.meta.studentsEnrolled * exam.price * 0.667);
+      }
+      else ++liveExams;
+
+      enrolledStudents += exam.meta.studentsEnrolled;
+      moneyCollected += exam.meta.studentsEnrolled * exam.price;
+      prizePending += Math.floor(exam.meta.studentsEnrolled * exam.price * 0.667);
+    });
+
+    results.forEach(result => {
+      if(result.examType == 'practice') ++practiceAttmepts;
+      else ++participation;
+    });
+
+    transactions.forEach(transaction => {
+      if(transaction.meta.kind === 'deposit') moneyRecieved += transaction.amount;
+    });
+    
+
+
+    let ExamAnalytics = {
+      total: exams.length,
+      live: liveExams,
+      completed: completedExams,
+      practice: practiceExams
+    };
+
+    let StudentAnalytics = {
+      total: students.length,
+      enrolled: enrolledStudents,
+      participated: participation,
+      practice: practiceAttmepts
+    }
+
+    let MoneyAnalytics = {
+      recieved: moneyRecieved,
+      collected: moneyCollected,
+      distributed: prizeDistributed,
+      pending: prizePending,
+      studentOwned: moneyRecieved - moneyCollected + prizeDistributed,
+      profit: moneyCollected - prizeDistributed - prizePending
+    }
+
+    respondSuccess(res, 'Analytics fetched', {ExamAnalytics, StudentAnalytics, MoneyAnalytics});
+
+  } catch(err) {
+    return respondError(res, 'Unable to fetch analytics', 500);
+  }
+}
 
 
 // Gets list of all coordinators
@@ -24,7 +93,7 @@ module.exports.getCoordinators = async (req, res) => {
 // Gets list of all users
 module.exports.getUsers = async (req, res) => {
   try{
-    let users = await Person.find({role: 'user'}, {name: 1, email: 1, role: 1, _id: 1, meta: 1, 'wallet.coins': 1});
+    let users = await Person.find({role: 'user'}, {name: 1, phone: 1, email: 1, role: 1, _id: 1, meta: 1, 'wallet.coins': 1});
     respondSuccess(res, 'Users fetched', users);
   } catch(err) {
     respondError(res, 'Unable to fetch users', 500);
@@ -283,5 +352,24 @@ module.exports.addTransaction = async (req, res) => {
 
   } catch(err) {
     respondError(res, err.message, 400);
+  }
+}
+
+// Deny pending transaction
+module.exports.denyTransaction = async (req, res) => {
+  const { id } = req.body;
+  if(!id) return respondError(res, 'No transaction id provided', 400);
+
+  try {
+    const transaction = await Transaction.findById(id);
+    if(!transaction) return respondError(res, 'Transaction not found', 404);
+
+    transaction.status = 'failed';
+    transaction.meta.title = 'Transaction denied by admin';
+    await transaction.save();
+
+    respondSuccess(res, 'Transaction denied', true);
+  } catch (err) {
+    respondError(res, 'Something went wrong', 503);
   }
 }

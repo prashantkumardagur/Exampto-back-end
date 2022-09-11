@@ -47,7 +47,7 @@ module.exports.logout = async (req, res) => {
 
 // User registration
 module.exports.registerUser = async (req, res) => {
-  const { name, email, password, program, gender } = req.body;
+  const { name, email, password, program, gender, phone } = req.body;
   console.log(program)
 
   const existingUser = await Person.findOne({ email });
@@ -56,7 +56,7 @@ module.exports.registerUser = async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, 12);
 
 
-  const person = new Person({ name, email, program, gender, password : hashedPassword, role: 'user' });
+  const person = new Person({ name, email, program, gender, phone, password : hashedPassword, role: 'user' });
   try {
     await person.save();
     person.password = undefined;

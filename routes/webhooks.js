@@ -48,7 +48,7 @@ router.post('/payment', async (req, res) => {
         user.wallet.transactions.push(transaction._id);
         await user.save();
       } else {
-        transaction.status = 'pending';
+        transaction.status = data.status ==='captured' ? 'pending' : 'failed';
         await transaction.save();
       }
 

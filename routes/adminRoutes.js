@@ -10,6 +10,7 @@ const admin = require('../controllers/adminController');
 
 router.use(authCheck);
 
+router.post('/get-analytics', adminCheck, admin.getAnalytics);
 router.post('/get-coordinators', adminCheck, admin.getCoordinators);
 router.post('/get-users', adminCheck, admin.getUsers);
 router.post('/create-new-coordinator', adminCheck, validateNewCoordinatorData, admin.createNewCoordinator);
@@ -25,6 +26,7 @@ router.post('/reject-payment', adminCheck, admin.rejectPayment);
 router.post('/approve-payment', adminCheck, admin.approvePayment);
 router.post('/change-transaction-email', adminCheck, admin.changeTransactionEmail);
 router.post('/add-transaction', adminCheck, validateNewTransactionData, admin.addTransaction);
+router.post('/deny-transaction', adminCheck, admin.denyTransaction);
 
 router.post('/search-exams', adminCheck, admin.searchExams);
 
