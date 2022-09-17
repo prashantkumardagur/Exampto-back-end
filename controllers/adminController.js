@@ -15,7 +15,7 @@ module.exports.getAnalytics = async (req, res) => {
   try{
     let liveExams = 0, completedExams = 0, practiceExams = 0;
     let enrolledStudents = 0, participation = 0, practiceAttmepts = 0;
-    let moneyRecieved = 0, profit = 0, moneyCollected = 0, prizeDistributed = 0, prizePending = 0;
+    let moneyRecieved = 0, moneyCollected = 0, prizeDistributed = 0, prizePending = 0;
 
 
     let exams = await Exam.find({"meta.isPublished": true}, {meta: 1, price: 1});

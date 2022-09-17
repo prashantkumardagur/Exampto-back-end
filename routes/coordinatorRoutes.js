@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 
 const { authCheck, coordinatorCheck } = require('../middlewares/authMiddleware');
-const { fileUpload } = require('../middlewares/fileUpload');
 
 const coordinator = require('../controllers/coordinatorController');
 
@@ -10,6 +9,7 @@ const coordinator = require('../controllers/coordinatorController');
 
 router.use(authCheck);
 
+router.post('/get-analytics', coordinatorCheck, coordinator.getAnalytics);
 router.post('/initialize-test', coordinatorCheck, coordinator.initializeTest);
 router.post('/get-unpublished-exams', coordinatorCheck, coordinator.getUnpublishedExams);
 router.post('/get-all-exams', coordinatorCheck, coordinator.getAllExams);

@@ -1,10 +1,62 @@
 const Exam = require('../models/exam');
 const Result = require('../models/result');
 const Transaction = require('../models/transaction');
+const Person = require('../models/person');
 
 const { respondSuccess, respondError } = require('./utils/responders');
 
 //=======================================================================================
+
+// Get analytics
+module.exports.getAnalytics = async (req, res) => {
+  try{
+    let liveExams = 0, completedExams = 0, practiceExams = 0;
+    let enrolledStudents = 0, participation = 0, practiceAttmepts = 0;
+
+
+    let exams = await Exam.find({"meta.isPublished": true, "meta.creater": req.person}, {meta: 1, price: 1});
+    let students = await Person.find({role: 'user'}, {wallet: 1, meta: 1});
+    let results = await Result.find({exam: {$in: exams}}, {examType: 1});
+
+    exams.forEach(exam => {
+      if(exam.meta.resultDeclared) {
+        ++completedExams;
+        if(exam.meta.availableForPractice) ++practiceExams;
+      }
+      else ++liveExams;
+
+      enrolledStudents += exam.meta.studentsEnrolled;
+    });
+
+    results.forEach(result => {
+      if(result.examType == 'practice') ++practiceAttmepts;
+      else ++participation;
+    });
+    
+
+
+    let ExamAnalytics = {
+      total: exams.length,
+      live: liveExams,
+      completed: completedExams,
+      practice: practiceExams
+    };
+
+    let StudentAnalytics = {
+      total: students.length,
+      enrolled: enrolledStudents,
+      participated: participation,
+      practice: practiceAttmepts
+    }
+
+    respondSuccess(res, 'Analytics fetched', {ExamAnalytics, StudentAnalytics});
+
+  } catch(err) {
+    return respondError(res, 'Unable to fetch analytics', 500);
+  }
+}
+
+
 
 module.exports.initializeTest = async (req, res) => {
   const newExam = new Exam({
